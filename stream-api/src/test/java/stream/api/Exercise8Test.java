@@ -34,11 +34,11 @@ public class Exercise8Test extends ClassicOnlineStore {
                 .collect(Collectors.toList());
 
         Set<String> itemSetNotOnSale = customerStream
-                .flatMap(customer -> customer.getWantToBuy().stream()
+                .flatMap( customer -> customer.getWantToBuy().stream()
                         .map(Item::getName))
-                .collect(Collectors.toList())
-                .stream()
-                .filter(itemWanted -> itemListOnSale.forEach(onSale -> onSale.equalsIgnoreCase(itemWanted)));
+                .collect(Collectors.toList()).stream()
+                .filter(element -> !itemListOnSale.contains(element))
+                .collect(Collectors.toSet());
 
         assertThat(itemSetNotOnSale, hasSize(3));
         assertThat(itemSetNotOnSale, hasItems("bag", "pants", "coat"));
@@ -54,7 +54,7 @@ public class Exercise8Test extends ClassicOnlineStore {
          * Items that are not on sale can be counted as 0 money cost.
          * If there is several same items with different prices, customer can choose the cheapest one.
          */
-        List<Item> onSale = null;
+        List<Item> onSale = shopStream.flatMap(shop -> shop.getItemList().stream()).collect(Collectors.toList());
         Predicate<Customer> havingEnoughMoney = null;
         List<String> customerNameList = null;
 
