@@ -55,20 +55,27 @@ public class Exercise8Test extends ClassicOnlineStore {
          * Items that are not on sale can be counted as 0 money cost.
          * If there is several same items with different prices, customer can choose the cheapest one.
          */
-        List<Item> onSale = shopStream.flatMap(shop -> shop.getItemList().stream()).collect(Collectors.toList());
-        Predicate<Customer> havingEnoughMoney =
-                customer -> customer.getBudget() >= customer.getWantToBuy().stream()
-                .mapToInt(wantedItem -> onSale.stream()
-                .filter(shopItem -> shopItem.getName().equals(wantedItem.getName()))
-                .sorted(Comparator.comparingInt(Item::getPrice))
-                .findFirst()
-                .map(Item::getPrice).orElse(0))
-                .sum();
-        List<String> customerNameList = customerStream.filter(havingEnoughMoney)
+        List<Item> onSale = shopStream.flatMap(shop -> shop.getItemList().stream())
+                .collect(Collectors.toList());
+
+        Predicate<Customer> havingEnoughMoney = customer -> customer.getBudget() >= getBudgetSum(customer, onSale);
+
+        List<String> customerNameList = customerStream
+                .filter(havingEnoughMoney)
                 .map(Customer::getName)
                 .collect(Collectors.toList());
 
         assertThat(customerNameList, hasSize(7));
         assertThat(customerNameList, hasItems("Joe", "Patrick", "Chris", "Kathy", "Alice", "Andrew", "Amy"));
+    }
+
+    private int getBudgetSum(Customer customer, List<Item> onSale) {
+        return customer.getWantToBuy().stream()
+                .mapToInt(wantedItem -> onSale.stream()
+                        .filter(shopItem -> shopItem.getName().equals(wantedItem.getName()))
+                        .min(Comparator.comparingInt(Item::getPrice))
+                        .map(Item::getPrice)
+                        .orElse(0))
+                .sum();
     }
 }
